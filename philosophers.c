@@ -1,7 +1,6 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <unistd.h>
 
 #define NUM_PHILOSOPHERS 5
 
@@ -13,8 +12,9 @@ int forks[NUM_PHILOSOPHERS];
 void pickup_forks(int philosopher_number, int left_fork, int right_fork){
   pthread_mutex_lock(&mutex);
   while(forks[left_fork] || forks[right_fork])
-    pthread_cond_wait(&mutex, &cond_var);
+    pthread_cond_wait(&cond_var, &mutex);
   printf("Philosopher %d taking forks and eating.\n", philosopher_number);
+  fflush(stdout);
   forks[left_fork] = 1;
   forks[right_fork] = 1;
   pthread_cond_signal(&cond_var);
@@ -24,6 +24,7 @@ void pickup_forks(int philosopher_number, int left_fork, int right_fork){
 void return_forks(int philosopher_number, int left_fork, int right_fork){
   pthread_mutex_lock(&mutex);
   printf("Philosopher %d returning forks and thinking.\n", philosopher_number);
+  fflush(stdout);
   forks[left_fork] = 0;
   forks[right_fork] = 0;
   pthread_cond_signal(&cond_var);
@@ -33,9 +34,11 @@ void return_forks(int philosopher_number, int left_fork, int right_fork){
 void * philosopher(void *args){
   int *tmp = (int *)args;
   int i = tmp[0];
+  printf("Philosopher %d ready to eat and think.\n", i);
+  fflush(stdout);
   int right = i;
   int left = (i - 1 == -1) ? NUM_PHILOSOPHERS - 1 : (i - 1);
-  int loops_left = 10;
+  int loops_left = 3;
   while(loops_left > 0){
     pickup_forks(i, left, right);
     sleep(1);
